@@ -19,7 +19,7 @@ RUN pip3 install pyqt5==5.15
 
 # Install Rogue (An specific point in the the pre-release branch)
 WORKDIR /usr/local/src
-RUN git clone https://github.com/slaclab/rogue.git -b v4.11.11_Iterablefix
+RUN git clone https://github.com/slaclab/rogue.git -b v4.11.12
 WORKDIR rogue
 
 # Apply patches
