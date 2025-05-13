@@ -38,5 +38,5 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          tags: ghcr.io/slaclab//smurf-rogue:${{ steps.get_tag.outputs.tag }}
+          tags: ghcr.io/slaclab/smurf-rogue:${{ steps.get_tag.outputs.tag }}
           build-args: branch=${{ steps.get_tag.outputs.tag }}
