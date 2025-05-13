@@ -40,7 +40,7 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          tags: slaclab/smurf-roguev6:${{ steps.get_tag.outputs.tag }}
+          tags: slaclab/smurf-roguev6-docker:${{ steps.get_tag.outputs.tag }}
           build-args: |
             branch=${{ steps.get_tag.outputs.tag }}
             GH_TOKEN=${{ secrets.GH_TOKEN }}
