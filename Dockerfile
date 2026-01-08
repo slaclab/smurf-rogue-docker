@@ -1,4 +1,4 @@
-FROM ubuntu:22.04
+FROM ubuntu:latest
 
 ARG GH_TOKEN
 
@@ -20,6 +20,7 @@ RUN DEBIAN_FRONTEND=noninteractive \
     python3 \
     python3-dev \
     python3-pip \
+    python3-venv \
     libreadline6-dev \
     libboost-all-dev \
     libbz2-dev \
@@ -31,6 +32,11 @@ RUN DEBIAN_FRONTEND=noninteractive \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends git-lfs && \
     git lfs install
 #    rm -rf /var/lib/apt/lists/*
+
+# Create a virtualenv for python installs
+ENV VIRTUAL_ENV=/opt/venv
+RUN python3 -m venv --system-site-packages $VIRTUAL_ENV
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
 # PIP Packages
 RUN pip3 install PyYAML parse click ipython pyzmq packaging matplotlib p4p pyepics numpy==1.26.4 pydm jsonpickle sqlalchemy pyserial
@@ -50,15 +56,11 @@ ENV PATH /usr/local/src/FirmwareLoader:${PATH}
 ADD packages/ProgramFPGA /usr/local/src/ProgramFPGA
 ENV PATH /usr/local/src/ProgramFPGA:${PATH}
 
-# Install Smurf test apps
-WORKDIR /usr/local/src
-RUN git clone https://$GH_TOKEN@github.com/slaclab/smurftestapps.git
-
 # Create the user cryo and the group smurf. Add the cryo user
 # to the smurf group, as primary group. And create its home
 # directory with the right permissions
-RUN useradd -d /home/cryo -M cryo -u 1000 && \
-    groupadd smurf -g 1001 && \
+RUN useradd -d /home/cryo -M cryo -o -u 1000 && \
+    groupadd smurf -o -g 1001 && \
     usermod -aG smurf cryo && \
     usermod -g smurf cryo && \
     mkdir /home/cryo && \
@@ -66,7 +68,7 @@ RUN useradd -d /home/cryo -M cryo -u 1000 && \
 
 # Install Rogue
 WORKDIR /usr/local/src
-RUN git clone https://github.com/slaclab/rogue.git -b v6.5.0 &&\
+RUN git clone https://github.com/slaclab/rogue.git -b v6.8.0 &&\
     mkdir rogue/build
 WORKDIR rogue/build
 RUN cmake .. -DROGUE_INSTALL=system && \
