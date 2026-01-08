@@ -30,7 +30,7 @@ jobs:
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
-          username: tristpinsm
+          username: slacrherbst
           password: ${{ secrets.GH_TOKEN }}
 
       # Build and push the docker image
