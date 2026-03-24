@@ -3,7 +3,7 @@
 
 ## Description
 
-This docker image, named **smurf-roguev6** contains all the base tools used by the SMuRF project.
+This docker image, named **smurf-rogue** contains all the base tools used by the SMuRF project.
 
 It is based on ubuntu 24.04, and contains:
 - Basic system tools
@@ -32,13 +32,13 @@ When a tag is pushed to this github repository, a new Docker image is automatica
 In your Dockerfile
 
 ```
-FROM ghcr.io/slaclab/smurf-roguev6:<TAG>
+FROM ghcr.io/slaclab/smurf-rogue:<TAG>
 ```
 
 In the commandline
 
 ```
-docker run -ti --rm --name smurf-roguev6 ghcr.io/slaclab/smurf-roguev6:TAG
+docker run -ti --rm --name smurf-roguev6 ghcr.io/slaclab/smurf-rogue:TAG
 ```
 
 - TAG: The tag of the Docker file, which is the same as this repository's tags.
@@ -48,13 +48,13 @@ docker run -ti --rm --name smurf-roguev6 ghcr.io/slaclab/smurf-roguev6:TAG
 To test without releasing, can build locally by running
 
 ```
-docker build . -t smurf-roguev6
+docker build . -t smurf-rogue
 ```
 
 on the command line in the top smurf-base-docker repository directory.  If successful, can enter a bash session in the new image via
 
 ```
-docker run -ti --rm --name smurf-roguev6 smurf-roguev6:latest
+docker run -ti --rm --name smurf-rogue smurf-rogue:latest
 ```
 
 ### Use the container to connect remote rogue GUIs
