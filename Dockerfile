@@ -1,4 +1,4 @@
-FROM ubuntu:latest
+FROM ubuntu:24.04
 
 ARG GH_TOKEN
 
@@ -31,7 +31,6 @@ RUN DEBIAN_FRONTEND=noninteractive \
     curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | bash && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends git-lfs && \
     git lfs install
-#    rm -rf /var/lib/apt/lists/*
 
 # Create a virtualenv for python installs
 ENV VIRTUAL_ENV=/opt/venv
@@ -39,7 +38,7 @@ RUN python3 -m venv --system-site-packages $VIRTUAL_ENV
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
 # PIP Packages
-RUN pip3 install PyYAML parse click ipython pyzmq packaging matplotlib p4p pyepics numpy==1.26.4 pydm jsonpickle sqlalchemy pyserial
+RUN pip3 install PyYAML parse click ipython pyzmq packaging matplotlib p4p pyepics numpy pydm jsonpickle sqlalchemy pyserial
 
 # Add the IPMI package
 WORKDIR /usr/local/src
@@ -68,7 +67,7 @@ RUN useradd -d /home/cryo -M cryo -o -u 1000 && \
 
 # Install Rogue
 WORKDIR /usr/local/src
-RUN git clone https://github.com/slaclab/rogue.git -b v6.8.0 &&\
+RUN git clone https://github.com/slaclab/rogue.git -b v6.8.5 &&\
     mkdir rogue/build
 WORKDIR rogue/build
 RUN cmake .. -DROGUE_INSTALL=system && \
