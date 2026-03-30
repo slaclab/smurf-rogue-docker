@@ -1,40 +1,86 @@
-FROM ghcr.io/slaclab/smurf-base:R4.0.2
+FROM ubuntu:24.04
 
-# Install system tools
-RUN apt-get update && apt-get install -y \
+ARG GH_TOKEN
+
+# Intall system utilities
+RUN DEBIAN_FRONTEND=noninteractive \
+    apt-get update && \
+    apt-get install -y --no-install-recommends tzdata &&\
+    apt-get install -y \
+    wget \
+    curl \
+    git \
+    vim \
+    emacs \
+    gnupg \
+    net-tools \
+    iputils-ping \
+    ipmitool \
     cmake \
+    python3 \
+    python3-dev \
+    python3-pip \
+    python3-venv \
+    libreadline6-dev \
     libboost-all-dev \
     libbz2-dev \
     libzmq3-dev \
     python3-pyqt5 \
     python3-pyqt5.qtsvg \
- && rm -rf /var/lib/apt/lists/*
+    gdb && \
+    curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | bash && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends git-lfs && \
+    git lfs install
+
+# Create a virtualenv for python installs
+ENV VIRTUAL_ENV=/opt/venv
+RUN python3 -m venv --system-site-packages $VIRTUAL_ENV
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
 # PIP Packages
-RUN pip3 install PyYAML Pyro4 parse click pyzmq packaging jsonpickle sqlalchemy serial PyQt5
-# Server gui crashing for PyDM versions >= 1.19.0.
-RUN pip3 install pydm==1.17.0
+RUN pip3 install PyYAML parse click ipython pyzmq packaging matplotlib p4p pyepics numpy pydm jsonpickle sqlalchemy pyserial
 
-# Install Rogue (An specific point in the the pre-release branch)
+# Add the IPMI package
 WORKDIR /usr/local/src
-RUN git clone https://github.com/slaclab/rogue.git -b v4.11.12
-WORKDIR rogue
+ADD packages/IPMC.tar.gz .
+ENV LD_LIBRARY_PATH /usr/local/src/IPMC/lib64:${LD_LIBRARY_PATH}
+ENV PATH /usr/local/src/IPMC/bin/x86_64-linux-dbg:${PATH}
 
-# Apply patches
+# Add the FirmwareLoader binary
+RUN mkdir -p  /usr/local/src/FirmwareLoader/
+ADD packages/FirmwareLoader.tar.gz /usr/local/src/FirmwareLoader/
+ENV PATH /usr/local/src/FirmwareLoader:${PATH}
 
-RUN mkdir build
-WORKDIR build
-RUN cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DROGUE_INSTALL=local .. && make -j4 install
-ENV PYTHONPATH=/usr/local/src/rogue/lib:${PYTHONPATH}
-ENV PYTHONPATH=/usr/local/src/rogue/python:${PYTHONPATH}
-ENV ROGUE_DIR=/usr/local/src/rogue
+# Add the ProgramFPGA utility
+ADD packages/ProgramFPGA /usr/local/src/ProgramFPGA
+ENV PATH /usr/local/src/ProgramFPGA:${PATH}
 
-# Setup PyDM environmental variables
-ENV PYQTDESIGNERPATH=${ROGUE_DIR}/python/pyrogue/pydm:${PYQTDESIGNERPATH}
-ENV PYDM_DATA_PLUGINS_PATH=${ROGUE_DIR}/python/pyrogue/pydm/data_plugins
-ENV PYDM_TOOLS_PATH=${ROGUE_DIR}/python/pyrogue/pydm/tools
+# Create the user cryo and the group smurf. Add the cryo user
+# to the smurf group, as primary group. And create its home
+# directory with the right permissions
+RUN useradd -d /home/cryo -M cryo -o -u 1000 && \
+    groupadd smurf -o -g 1001 && \
+    usermod -aG smurf cryo && \
+    usermod -g smurf cryo && \
+    mkdir /home/cryo && \
+    chown cryo:smurf /home/cryo
+
+# Install Rogue
+WORKDIR /usr/local/src
+RUN git clone https://github.com/slaclab/rogue.git -b v6.8.5 &&\
+    mkdir rogue/build
+WORKDIR rogue/build
+RUN cmake .. -DROGUE_INSTALL=system && \
+    make -j4 install && \
+    echo /usr/local/lib >> /etc/ld.so.conf.d/rogue_epics.conf && \
+    ldconfig
+ENV PYQTDESIGNERPATH /usr/local/lib/python3.10/dist-packages/pyrogue/pydm
+ENV PYDM_DATA_PLUGINS_PATH /usr/local/lib/python3.10/dist-packages/pyrogue/pydm/data_plugins
+ENV PYDM_TOOLS_PATH /usr/local/lib/python3.10/dist-packages/pyrogue/pydm/tools
 
 # Copy utility scripts
-RUN mkdir -p /usr/local/src/rogue_utilities
-COPY scripts/* /usr/local/src/rogue_utilities/
-ENV PATH=/usr/local/src/rogue_utilities:${PATH}
+COPY scripts/* /usr/local/bin/
+ENV PATH /usr/local/bin:${PATH}
+
+# Set the work directory to the root
+WORKDIR /
