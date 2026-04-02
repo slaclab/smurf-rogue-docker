@@ -55,15 +55,27 @@ ENV PATH /usr/local/src/FirmwareLoader:${PATH}
 ADD packages/ProgramFPGA /usr/local/src/ProgramFPGA
 ENV PATH /usr/local/src/ProgramFPGA:${PATH}
 
-# Create the user cryo and the group smurf. Add the cryo user
-# to the smurf group, as primary group. And create its home
-# directory with the right permissions
-RUN useradd -d /home/cryo -M cryo -o -u 1000 && \
-    groupadd smurf -o -g 1001 && \
-    usermod -aG smurf cryo && \
-    usermod -g smurf cryo && \
-    mkdir /home/cryo && \
-    chown cryo:smurf /home/cryo
+## Create the user cryo and the group smurf. Add the cryo user
+## to the smurf group, as primary group. And create its home
+## directory with the right permissions
+#RUN useradd -d /home/cryo -M cryo -o -u 1000 && \
+#    groupadd smurf -o -g 1001 && \
+#    usermod -aG smurf cryo && \
+#    usermod -g smurf cryo && \
+#    mkdir /home/cryo && \
+#    chown cryo:smurf /home/cryo
+
+# Newer ubuntu:24.04 image has a default user named ubuntu in
+# it with uid:gid 1000:1000, which conflicts with our default
+# cryo:smurf user 1000:1001.  This renames the ubuntu user
+# to cryo instead of making a new cryo user.
+RUN set -eux; \
+    if ! getent group 1001 >/dev/null; then groupadd -g 1001 smurf; fi; \
+    usermod -l cryo ubuntu; \
+    usermod -d /home/cryo cryo; \
+    mkdir -p /home/cryo; \
+    chown -R cryo:1001 /home/cryo; \
+    usermod -g 1001 cryo
 
 # Install Rogue
 WORKDIR /usr/local/src
