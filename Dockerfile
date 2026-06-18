@@ -79,7 +79,7 @@ RUN set -eux; \
 
 # Install Rogue
 WORKDIR /usr/local/src
-RUN git clone https://github.com/slaclab/rogue.git -b v6.8.5 &&\
+RUN git clone https://github.com/slaclab/rogue.git -b v6.14.1 &&\
     mkdir rogue/build
 WORKDIR rogue/build
 RUN cmake .. -DROGUE_INSTALL=system && \
